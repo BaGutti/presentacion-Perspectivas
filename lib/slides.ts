@@ -87,7 +87,7 @@ export const slides: SlideData[] = [
     title: 'Las Petites Écoles',
     subtitle: 'Fusión de racionalismo cartesiano e intimismo agustiniano. Grupos reducidos, reflexión crítica, lengua materna antes que el latín. Una pedagogía de la conciencia y el rigor interior.',
     keywords: ['Jansenio', 'Saint-Cyran', 'Port-Royal', 'Introspección'],
-    accent: '#2C3E50',
+    accent: '#C9A96E',
     svgFile: 'slide09.svg',
   },
   {
