@@ -1,0 +1,194 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #000;
+  font-family: Georgia, 'Times New Roman', serif;
+  cursor: none;
+}
+
+/* Custom cursor */
+.custom-cursor {
+  position: fixed;
+  width: 12px;
+  height: 12px;
+  background: rgba(212, 175, 55, 0.8);
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate(-50%, -50%);
+  transition: transform 0.1s ease, background 0.2s ease;
+  mix-blend-mode: screen;
+}
+
+/* Slide container */
+.slide-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Slide text overlay */
+.slide-content {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 3rem 5rem 5rem;
+  background: linear-gradient(to top, rgba(0,0,0,0.96) 0%, rgba(0,0,0,0.72) 55%, transparent 100%);
+  z-index: 10;
+}
+
+.slide-chapter {
+  font-size: clamp(0.85rem, 1.3vw, 1.15rem);
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  color: #D4AF37;
+  margin-bottom: 1rem;
+  opacity: 0;
+}
+
+.slide-title {
+  font-size: clamp(3rem, 6vw, 5.2rem);
+  font-weight: 400;
+  color: #fff;
+  line-height: 1.08;
+  margin-bottom: 1.25rem;
+  opacity: 0;
+}
+
+.slide-subtitle {
+  font-size: clamp(1.15rem, 1.9vw, 1.65rem);
+  color: rgba(255,255,255,0.82);
+  font-style: italic;
+  line-height: 1.55;
+  max-width: 52ch;
+  opacity: 0;
+}
+
+.slide-keywords {
+  margin-top: 1.4rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  opacity: 0;
+}
+
+.slide-keyword {
+  font-size: clamp(0.7rem, 1vw, 0.95rem);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #D4AF37;
+  border: 1px solid rgba(212,175,55,0.4);
+  padding: 0.3rem 0.9rem;
+  border-radius: 2px;
+}
+
+/* HUD */
+.hud {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  padding: 1.5rem 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hud-progress-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(to right, #D4AF37, #F5D160);
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 100;
+}
+
+.hud-counter {
+  font-size: clamp(0.85rem, 1.2vw, 1.1rem);
+  letter-spacing: 0.2em;
+  color: rgba(212, 175, 55, 0.6);
+  font-family: 'Courier New', monospace;
+}
+
+.hud-title {
+  font-size: clamp(0.8rem, 1.1vw, 1rem);
+  letter-spacing: 0.15em;
+  color: rgba(255,255,255,0.3);
+  text-transform: uppercase;
+  max-width: 40ch;
+  text-align: center;
+}
+
+/* Nav arrows */
+.nav-arrow {
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 50;
+  width: 72px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(212,175,55,0.4);
+  transition: color 0.3s ease, opacity 0.3s ease;
+  cursor: pointer;
+  font-size: 2.4rem;
+}
+
+.nav-arrow:hover {
+  color: rgba(212,175,55,0.9);
+}
+
+.nav-prev { left: 1.5rem; }
+.nav-next { right: 1.5rem; }
+
+/* Transition overlay */
+.transition-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 200;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* ── SVG Portrait ────────────────────────────────────────────────────────────── */
+.svg-portrait {
+  position: fixed;
+  right: 4vw;
+  bottom: 9vh;
+  width: 36vw;
+  max-width: 560px;
+  min-width: 220px;
+  height: 78vh;
+  z-index: 8;           /* above Three.js canvas (z:1), below text (z:10) */
+  pointer-events: none;
+}
+
+.svg-portrait svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  filter: drop-shadow(0 0 28px color-mix(in srgb, currentColor 30%, transparent));
+}
+
+/* Shift text to the left when a portrait occupies the right */
+.slide-content.has-portrait {
+  max-width: 54%;
+}
