@@ -63,6 +63,27 @@ export default function Presentation() {
     else prev()
   }, [next, prev])
 
+  // ── Swipe navigation ─────────────────────────────────────────────────────────
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null)
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    touchStartRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+  }, [])
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    if (!touchStartRef.current) return
+    const dx = e.changedTouches[0].clientX - touchStartRef.current.x
+    const dy = e.changedTouches[0].clientY - touchStartRef.current.y
+    const absDx = Math.abs(dx)
+    const absDy = Math.abs(dy)
+    if (absDx < 40 || absDx < absDy) {
+      touchStartRef.current = null
+      return
+    }
+    if (dx > 0) prev()
+    else next()
+    touchStartRef.current = null
+  }, [next, prev])
+
   // ── Custom cursor ────────────────────────────────────────────────────────────
   useEffect(() => {
     const move = (e: MouseEvent) => {
@@ -78,7 +99,7 @@ export default function Presentation() {
   }, [])
 
   return (
-    <div style={{ width: '100vw', height: '100vh', overflow: 'hidden', background: '#000', position: 'relative' }}>
+    <div style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#000', position: 'relative' }}>
       {/* Custom cursor */}
       <div ref={cursorRef} className="custom-cursor" />
 
@@ -99,8 +120,10 @@ export default function Presentation() {
       {/* Click zones */}
       <div
         onClick={handleClick}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
         style={{
-          position: 'fixed', inset: 0, zIndex: 5, cursor: 'none',
+          position: 'fixed', inset: 0, zIndex: 5,
         }}
       />
 

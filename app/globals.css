@@ -14,7 +14,12 @@ html, body {
   overflow: hidden;
   background: #000;
   font-family: Georgia, 'Times New Roman', serif;
-  cursor: none;
+}
+
+/* Hide custom cursor on touch devices */
+@media (hover: none) and (pointer: coarse) {
+  html, body { cursor: auto; }
+  .custom-cursor { display: none !important; }
 }
 
 /* Custom cursor */
@@ -35,8 +40,8 @@ html, body {
 .slide-canvas {
   position: fixed;
   inset: 0;
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
 }
 
 /* Slide text overlay */
@@ -147,12 +152,21 @@ html, body {
   justify-content: center;
   color: rgba(212,175,55,0.4);
   transition: color 0.3s ease, opacity 0.3s ease;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   cursor: pointer;
   font-size: 2.4rem;
+  background: none;
+  border: none;
+  outline: none;
 }
 
 .nav-arrow:hover {
   color: rgba(212,175,55,0.9);
+}
+
+.nav-arrow:active {
+  color: rgba(212,175,55,1);
 }
 
 .nav-prev { left: 1.5rem; }
@@ -177,7 +191,7 @@ html, body {
   max-width: 560px;
   min-width: 220px;
   height: 78vh;
-  z-index: 8;           /* above Three.js canvas (z:1), below text (z:10) */
+  z-index: 8;
   pointer-events: none;
 }
 
@@ -191,4 +205,178 @@ html, body {
 /* Shift text to the left when a portrait occupies the right */
 .slide-content.has-portrait {
   max-width: 54%;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════ */
+/* RESPONSIVE BREAKPOINTS                                                */
+/* ═══════════════════════════════════════════════════════════════════════ */
+
+/* ── Tablets & small laptops (≤ 1024px) ─────────────────────────────── */
+@media (max-width: 1024px) {
+  .slide-content {
+    padding: 2.5rem 3rem 4rem;
+  }
+
+  .slide-content.has-portrait {
+    max-width: 52%;
+  }
+
+  .svg-portrait {
+    width: 40vw;
+    right: 2vw;
+  }
+
+  .hud {
+    padding: 1.2rem 2rem;
+  }
+
+  .nav-arrow {
+    width: 56px;
+    height: 56px;
+    font-size: 2rem;
+  }
+
+  .nav-prev { left: 0.8rem; }
+  .nav-next { right: 0.8rem; }
+}
+
+/* ── Portrait tablets (≤ 768px) ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  .slide-content {
+    padding: 2rem 2rem 3.5rem;
+  }
+
+  .slide-content.has-portrait {
+    max-width: 100%;
+  }
+
+  .svg-portrait {
+    position: fixed;
+    right: 50%;
+    transform: translateX(50%);
+    bottom: auto;
+    top: 50%;
+    transform: translate(50%, -50%);
+    width: 55vw;
+    height: 55vh;
+    opacity: 0.35;
+    z-index: 5;
+  }
+
+  .slide-chapter {
+    font-size: clamp(0.75rem, 2.5vw, 1rem);
+  }
+
+  .slide-title {
+    font-size: clamp(1.8rem, 7vw, 3rem);
+    line-height: 1.15;
+    margin-bottom: 0.8rem;
+  }
+
+  .slide-subtitle {
+    font-size: clamp(0.9rem, 3vw, 1.2rem);
+    line-height: 1.5;
+    max-width: 100%;
+  }
+
+  .slide-keyword {
+    font-size: clamp(0.6rem, 2vw, 0.8rem);
+    padding: 0.25rem 0.6rem;
+  }
+
+  .hud {
+    padding: 0.8rem 1.2rem;
+  }
+
+  .hud-counter {
+    font-size: 0.8rem;
+  }
+
+  .hud-title {
+    font-size: 0.7rem;
+    max-width: 20ch;
+  }
+
+  .nav-arrow {
+    width: 48px;
+    height: 48px;
+    font-size: 1.8rem;
+  }
+
+  .nav-prev { left: 0.4rem; }
+  .nav-next { right: 0.4rem; }
+}
+
+/* ── Phones (≤ 480px) ───────────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .slide-content {
+    padding: 1.5rem 1.2rem 3rem;
+  }
+
+  .slide-content.has-portrait {
+    max-width: 100%;
+  }
+
+  .svg-portrait {
+    width: 70vw;
+    height: 40vh;
+    opacity: 0.2;
+    bottom: auto;
+    top: 40%;
+    right: 50%;
+    transform: translate(50%, -50%);
+  }
+
+  .slide-chapter {
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    margin-bottom: 0.6rem;
+  }
+
+  .slide-title {
+    font-size: clamp(1.5rem, 8vw, 2.2rem);
+    line-height: 1.1;
+    margin-bottom: 0.6rem;
+  }
+
+  .slide-subtitle {
+    font-size: clamp(0.8rem, 3.5vw, 1rem);
+    line-height: 1.45;
+    max-width: 100%;
+  }
+
+  .slide-keywords {
+    margin-top: 0.8rem;
+    gap: 0.4rem;
+  }
+
+  .slide-keyword {
+    font-size: 0.55rem;
+    letter-spacing: 0.1em;
+    padding: 0.2rem 0.5rem;
+  }
+
+  .hud {
+    padding: 0.5rem 0.8rem;
+  }
+
+  .hud-counter {
+    font-size: 0.7rem;
+  }
+
+  .hud-title {
+    display: none;
+  }
+
+  .nav-arrow {
+    width: 44px;
+    height: 44px;
+    font-size: 1.6rem;
+    top: auto;
+    bottom: 1rem;
+    transform: none;
+  }
+
+  .nav-prev { left: 0.3rem; }
+  .nav-next { right: 0.3rem; }
 }

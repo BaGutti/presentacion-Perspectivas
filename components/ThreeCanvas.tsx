@@ -26,7 +26,18 @@ export default function ThreeCanvas({ slideId }: ThreeCanvasProps) {
 
   useEffect(() => {
     initScene(slideId)
+
+    const handleResize = () => {
+      if (!canvasRef.current) return
+      const w = window.innerWidth
+      const h = window.innerHeight
+      canvasRef.current.width = w * window.devicePixelRatio
+      canvasRef.current.height = h * window.devicePixelRatio
+    }
+
+    window.addEventListener('resize', handleResize)
     return () => {
+      window.removeEventListener('resize', handleResize)
       if (cleanupRef.current) {
         cleanupRef.current()
         cleanupRef.current = null
@@ -38,7 +49,7 @@ export default function ThreeCanvas({ slideId }: ThreeCanvasProps) {
     <canvas
       ref={canvasRef}
       className="slide-canvas"
-      style={{ display: 'block', width: '100vw', height: '100vh' }}
+      style={{ display: 'block', width: '100%', height: '100%' }}
     />
   )
 }
