@@ -61,10 +61,15 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
         easing: 'easeInOutCubic',
         delay: stagger(30, { start: 200 }),
       })
+      container.style.opacity = '1'
+      container.style.transition = 'opacity 0.3s ease'
       window.setTimeout(() => startIdle(svgEl), 2500)
     } else {
-      svgEl.style.opacity = '0'
       svgEl.style.transformOrigin = 'center center'
+      svgEl.style.transform = 'translateY(30px) scale(0.92)'
+      svgEl.style.opacity = '0'
+      container.style.opacity = '1'
+      container.style.transition = 'opacity 0.3s ease'
       animate(svgEl, {
         opacity: [0, 1],
         translateY: [30, 0],
@@ -84,6 +89,7 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
 
     try { idleAnim.current?.pause() } catch {}
     container.innerHTML = ''
+    container.style.opacity = '0'
     loadedSrc.current = ''
 
     let cancelled = false
@@ -98,7 +104,9 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
         if (svgEl) {
           svgEl.removeAttribute('width')
           svgEl.removeAttribute('height')
-          svgEl.style.cssText = 'width:100%;height:100%;overflow:visible;opacity:0;'
+          svgEl.style.width = '100%'
+          svgEl.style.height = '100%'
+          svgEl.style.overflow = 'visible'
         }
 
         loadedSrc.current = src
@@ -125,8 +133,6 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
       className="svg-portrait"
       style={{
         color: accent,
-        opacity: visible ? 1 : 0,
-        transition: 'opacity 0.5s ease',
       }}
     />
   )
