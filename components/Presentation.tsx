@@ -5,6 +5,7 @@ import { slides } from '@/lib/slides'
 import ThreeCanvas from './ThreeCanvas'
 import HUD from './HUD'
 import SVGPortrait from './SVGPortrait'
+import QRButton from './QRButton'
 
 const TOTAL = slides.length
 const TRANSITION_MS = 700
@@ -215,6 +216,9 @@ export default function Presentation() {
 
       {/* HUD */}
       <HUD current={current + 1} total={TOTAL} title={slide.chapter} />
+
+      {/* QR button — only on first slide, desktop only */}
+      {current === 0 && <QRButton />}
     </div>
   )
 }
