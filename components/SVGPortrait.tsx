@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { animate, stagger } from 'animejs'
 
 interface Props {
@@ -9,12 +9,28 @@ interface Props {
   accent?: string
 }
 
+async function fetchWithRetry(url: string, retries = 3, delayMs = 500): Promise<string> {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const r = await fetch(url, { cache: 'force-cache' })
+      if (!r.ok) throw new Error(`HTTP ${r.status}`)
+      return await r.text()
+    } catch (_e) {
+      if (i === retries - 1) throw new Error('Max retries reached')
+      await new Promise((res) => setTimeout(res, delayMs * (i + 1)))
+    }
+  }
+  throw new Error('Unreachable')
+}
+
 export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const loadedSrc = useRef('')
   const idleAnim = useRef<ReturnType<typeof animate> | null>(null)
+  const [svgContent, setSvgContent] = useState<string | null>(null)
+  const [error, setError] = useState(false)
+  const srcRef = useRef(src)
 
-  // ── Idle float (shared by both modes) ────────────────────────────────────────
+  // ── Idle float ────────────────────────────────────────────────────────────────
   function startIdle(el: Element) {
     try { idleAnim.current?.pause() } catch {}
     idleAnim.current = animate(el, {
@@ -25,7 +41,7 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
     })
   }
 
-  // ── Entrance — auto-detects fill-based vs stroke-based SVG ───────────────────
+  // ── Entrance animation ────────────────────────────────────────────────────────
   function startEntrance(container: HTMLDivElement) {
     try { idleAnim.current?.pause() } catch {}
 
@@ -82,50 +98,50 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
     }
   }
 
-  // ── Load SVG when src changes ─────────────────────────────────────────────────
+  // ── Load SVG with retry ───────────────────────────────────────────────────────
   useEffect(() => {
-    const container = containerRef.current
-    if (!container) return
-
-    try { idleAnim.current?.pause() } catch {}
-    container.innerHTML = ''
-    container.style.opacity = '0'
-    loadedSrc.current = ''
-
+    srcRef.current = src
+    setSvgContent(null)
+    setError(false)
     let cancelled = false
 
-    fetch(src)
-      .then((r) => (r.ok ? r.text() : Promise.reject()))
+    fetchWithRetry(src)
       .then((html) => {
-        if (cancelled || !containerRef.current) return
-        containerRef.current.innerHTML = html
-
-        const svgEl = containerRef.current.querySelector('svg')
-        if (svgEl) {
-          svgEl.removeAttribute('width')
-          svgEl.removeAttribute('height')
-          svgEl.style.width = '100%'
-          svgEl.style.height = '100%'
-          svgEl.style.overflow = 'visible'
-        }
-
-        loadedSrc.current = src
-        if (visible) startEntrance(containerRef.current)
+        if (cancelled) return
+        setSvgContent(html)
       })
       .catch(() => {
-        // SVG not found — slide shows no portrait, 3D scene fills the space
+        if (cancelled) return
+        setError(true)
       })
 
     return () => { cancelled = true }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [src])
 
-  // ── Re-trigger entrance when slide becomes visible ────────────────────────────
+  // ── Inject SVG and animate when content is ready ──────────────────────────────
   useEffect(() => {
-    if (!visible || !loadedSrc.current || !containerRef.current) return
+    const container = containerRef.current
+    if (!container || !svgContent) return
+
+    container.innerHTML = svgContent
+
+    const svgEl = container.querySelector('svg')
+    if (svgEl) {
+      svgEl.removeAttribute('width')
+      svgEl.removeAttribute('height')
+      svgEl.style.width = '100%'
+      svgEl.style.height = '100%'
+      svgEl.style.overflow = 'visible'
+    }
+
+    startEntrance(container)
+  }, [svgContent])
+
+  // ── Re-trigger entrance when visibility changes ───────────────────────────────
+  useEffect(() => {
+    if (!visible || !svgContent || !containerRef.current) return
     startEntrance(containerRef.current)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible])
+  }, [visible, svgContent])
 
   return (
     <div
@@ -133,7 +149,22 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
       className="svg-portrait"
       style={{
         color: accent,
+        opacity: svgContent && visible ? 1 : 0,
+        transition: 'opacity 0.6s ease',
       }}
-    />
+    >
+      {error && (
+        <img
+          src={src}
+          alt=""
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+            filter: `drop-shadow(0 0 28px ${accent}44)`,
+          }}
+        />
+      )}
+    </div>
   )
 }
