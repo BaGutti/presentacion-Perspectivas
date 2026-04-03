@@ -933,40 +933,127 @@ export function scene11(canvas: HTMLCanvasElement): SceneCleanup {
   return () => { cancelAnimationFrame(id); removeResize(); renderer.dispose() }
 }
 
-// ─── SLIDE 12: Hobbes — Choque de partículas ─────────────────────────────────
+// ─── SLIDE 12: Hobbes — Estado de Naturaleza → Leviatán ──────────────────────
+// Ciclo de 24s que narra el pensamiento hobbsiano:
+//   0– 8s : caos puro — homo homini lupus, partículas colisionan libremente
+//   8–14s : el Leviatán emerge y atrae las partículas hacia su órbita
+//  14–20s : orden absoluto — partículas orbitan al soberano
+//  20–24s : disolución — sin gracia el orden se rompe, ciclo reinicia
 export function scene12(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
   camera.position.z = 7
   renderer.setClearColor(0x050000, 1)
 
-  const count = 2000
-  const geo = new THREE.BufferGeometry()
-  const pos = new Float32Array(count * 3)
-  const vel = new Float32Array(count * 3)
+  const COUNT = 1800
+  const pos         = new Float32Array(COUNT * 3)
+  const vel         = new Float32Array(COUNT * 3)
+  const orbitAngle  = new Float32Array(COUNT)
+  const orbitRadius = new Float32Array(COUNT)
+  const orbitSpeed  = new Float32Array(COUNT)
 
-  for (let i = 0; i < count; i++) {
-    pos[i*3] = (Math.random() - 0.5) * 10
-    pos[i*3+1] = (Math.random() - 0.5) * 8
-    pos[i*3+2] = (Math.random() - 0.5) * 3
-    vel[i*3] = (Math.random() - 0.5) * 0.05
-    vel[i*3+1] = (Math.random() - 0.5) * 0.05
-    vel[i*3+2] = 0
+  function randomize() {
+    for (let i = 0; i < COUNT; i++) {
+      pos[i*3]   = (Math.random() - 0.5) * 10
+      pos[i*3+1] = (Math.random() - 0.5) * 8
+      pos[i*3+2] = (Math.random() - 0.5) * 2
+      vel[i*3]   = (Math.random() - 0.5) * 0.04
+      vel[i*3+1] = (Math.random() - 0.5) * 0.04
+      vel[i*3+2] = 0
+      orbitAngle[i]  = Math.random() * Math.PI * 2
+      orbitRadius[i] = 0.8 + Math.random() * 2.8
+      orbitSpeed[i]  = (0.3 + Math.random() * 0.5) * (Math.random() > 0.5 ? 1 : -1)
+    }
   }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-  const mat = new THREE.PointsMaterial({ size: 0.05, color: 0xff2200, transparent: true, opacity: 0.7 })
-  const pts = new THREE.Points(geo, mat)
-  scene.add(pts)
+  randomize()
 
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+
+  const col = new Float32Array(COUNT * 3)
+  for (let i = 0; i < COUNT; i++) {
+    const t = Math.random()
+    col[i*3]   = 0.5 + t * 0.5  // rojo vivo → carmesí
+    col[i*3+1] = 0.03 + t * 0.07
+    col[i*3+2] = 0.03
+  }
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
+
+  const mat = new THREE.PointsMaterial({
+    size: 0.04, vertexColors: true,
+    transparent: true, opacity: 0.85,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+  scene.add(new THREE.Points(geo, mat))
+
+  // Leviatán — esfera central de poder
+  const levMat = new THREE.MeshBasicMaterial({
+    color: 0xff3300, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+  const leviathan = new THREE.Mesh(new THREE.SphereGeometry(0.35, 32, 32), levMat)
+  scene.add(leviathan)
+
+  // Halo exterior del Leviatán
+  const haloMat = new THREE.MeshBasicMaterial({
+    color: 0x922b21, transparent: true, opacity: 0,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+    side: THREE.BackSide,
+  })
+  const halo = new THREE.Mesh(new THREE.SphereGeometry(0.75, 32, 32), haloMat)
+  scene.add(halo)
+
+  const CYCLE   = 24
+  const T_CHAOS = 8
+  const T_RISE  = 6   // 8–14s
+  const T_ORDER = 6   // 14–20s
+  const T_FALL  = 4   // 20–24s
+
+  let prevTc = 0
   let id: number
   const animate = () => {
     id = requestAnimationFrame(animate)
+    const t  = clock.getElapsedTime()
+    const tc = t % CYCLE
+
+    // Detectar reinicio del ciclo y re-aleatorizar posiciones
+    if (tc < prevTc) randomize()
+    prevTc = tc
+
+    // Fase: 0 = caos puro, 1 = orden absoluto
+    let order: number
+    if      (tc < T_CHAOS)                      order = 0
+    else if (tc < T_CHAOS + T_RISE)             order = (tc - T_CHAOS) / T_RISE
+    else if (tc < T_CHAOS + T_RISE + T_ORDER)   order = 1
+    else                                         order = 1 - (tc - T_CHAOS - T_RISE - T_ORDER) / T_FALL
+    order = Math.max(0, Math.min(1, order))
+    const ease = order * order * (3 - 2 * order)  // smoothstep
+
+    // Leviatán visible y pulsante conforme emerge el orden
+    levMat.opacity  = ease * (0.55 + Math.sin(t * 2.5) * 0.12)
+    haloMat.opacity = ease * 0.18
+    leviathan.scale.setScalar(1 + Math.sin(t * 2.0) * 0.08 * ease)
+    halo.scale.setScalar(1 + Math.sin(t * 1.5) * 0.15 * ease)
+
     const arr = geo.attributes.position.array as Float32Array
-    for (let i = 0; i < count; i++) {
-      arr[i*3] += vel[i*3]
-      arr[i*3+1] += vel[i*3+1]
-      if (Math.abs(arr[i*3]) > 5) vel[i*3] *= -1
-      if (Math.abs(arr[i*3+1]) > 4) vel[i*3+1] *= -1
+    for (let i = 0; i < COUNT; i++) {
+      // Movimiento caótico (se atenúa cuando sube el orden)
+      arr[i*3]   += vel[i*3]   * (1 - ease * 0.85)
+      arr[i*3+1] += vel[i*3+1] * (1 - ease * 0.85)
+      if (Math.abs(arr[i*3])   > 5.5) vel[i*3]   *= -1
+      if (Math.abs(arr[i*3+1]) > 4.5) vel[i*3+1] *= -1
+
+      if (ease > 0.01) {
+        // Avanzar ángulo de órbita y calcular posición target
+        orbitAngle[i] += orbitSpeed[i] * 0.016
+        const tx = Math.cos(orbitAngle[i]) * orbitRadius[i]
+        const ty = Math.sin(orbitAngle[i]) * orbitRadius[i] * 0.55
+        const tz = Math.sin(orbitAngle[i] * 0.7) * orbitRadius[i] * 0.3
+        // Lerp suave hacia la órbita
+        arr[i*3]   += (tx - arr[i*3])   * ease * 0.03
+        arr[i*3+1] += (ty - arr[i*3+1]) * ease * 0.03
+        arr[i*3+2] += (tz - arr[i*3+2]) * ease * 0.03
+      }
     }
     geo.attributes.position.needsUpdate = true
     renderer.render(scene, camera)
@@ -995,9 +1082,10 @@ export function scene13(canvas: HTMLCanvasElement): SceneCleanup {
     pos[i*3+1] = (R + r * Math.cos(v)) * Math.sin(u)
     pos[i*3+2] = r * Math.sin(v)
     const t = Math.random()
-    col[i*3] = 0.18 * (1-t) + 0.1 * t
-    col[i*3+1] = 0.53 * (1-t) + 0.75 * t
-    col[i*3+2] = 0.75 * (1-t) + 0.9 * t
+    // Esmeralda oscuro → teal vivo: evoca "Deus sive Natura" (lo orgánico-infinito)
+    col[i*3]   = 0.04 * (1-t) + 0.18 * t   // casi sin rojo
+    col[i*3+1] = 0.40 * (1-t) + 0.65 * t   // verde dominante
+    col[i*3+2] = 0.32 * (1-t) + 0.50 * t   // teal
   }
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
@@ -1016,41 +1104,107 @@ export function scene13(canvas: HTMLCanvasElement): SceneCleanup {
   return () => { cancelAnimationFrame(id); removeResize(); renderer.dispose() }
 }
 
-// ─── SLIDE 14: Locke/Tabula Rasa — Superficie vacía ──────────────────────────
+// ─── SLIDE 14: Locke/Tabula Rasa — La Mente en Blanco ────────────────────────
+// La escena empieza en oscuridad total — la mente vacía.
+// Partículas aparecen una a una: destello blanco al nacer → se asientan en azul suave.
+// Una vez vivas derivan muy lentamente, como pensamientos flotando.
+// Ciclo 24s: 18s llenándose → 4s nebulosa tranquila → 2s fade → oscuridad → reinicio.
 export function scene14(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
-  camera.position.set(0, 3, 6)
-  camera.lookAt(0, 0, 0)
+  camera.position.z = 5
 
-  // Flat plane (tabula rasa)
-  const planeGeo = new THREE.PlaneGeometry(10, 8, 40, 32)
-  const planeMat = new THREE.MeshBasicMaterial({ color: 0x111111, wireframe: true, transparent: true, opacity: 0.15 })
-  const plane = new THREE.Mesh(planeGeo, planeMat)
-  scene.add(plane)
+  const CYCLE    = 24
+  const FILL_DUR = 18
+  const STABLE   =  4
+  // FADE_DUR = CYCLE - FILL_DUR - STABLE = 2s
 
-  // Particles that appear over time
-  const count = 2500
-  const geo = new THREE.BufferGeometry()
-  const pos = new Float32Array(count * 3)
-  const times = new Float32Array(count) // spawn time
+  const COUNT      = 1800
+  const spawnTime  = new Float32Array(COUNT)
+  const baseX      = new Float32Array(COUNT)
+  const baseY      = new Float32Array(COUNT)
+  const baseZ      = new Float32Array(COUNT)
+  const driftX     = new Float32Array(COUNT)
+  const driftY     = new Float32Array(COUNT)
+  const brightness = new Float32Array(COUNT)
 
-  for (let i = 0; i < count; i++) {
-    pos[i*3] = (Math.random() - 0.5) * 9
-    pos[i*3+1] = (Math.random() - 0.5) * 0.3
-    pos[i*3+2] = (Math.random() - 0.5) * 7
-    times[i] = Math.random() * 15
+  function initParticles() {
+    for (let i = 0; i < COUNT; i++) {
+      spawnTime[i]  = (i / COUNT) * FILL_DUR + Math.random() * (FILL_DUR / COUNT) * 3
+      baseX[i]      = (Math.random() - 0.5) * 9
+      baseY[i]      = (Math.random() - 0.5) * 6
+      baseZ[i]      = (Math.random() - 0.5) * 3
+      driftX[i]     = (Math.random() - 0.5) * 0.0008
+      driftY[i]     = (Math.random() - 0.5) * 0.0008
+      brightness[i] = 0.5 + Math.random() * 0.5
+    }
   }
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.04, color: 0x2980b9, transparent: true, opacity: 0.0 }))
-  scene.add(pts)
+  initParticles()
 
+  const pos = new Float32Array(COUNT * 3)
+  const col = new Float32Array(COUNT * 3)
+  for (let i = 0; i < COUNT; i++) {
+    pos[i*3]   = baseX[i]; pos[i*3+1] = baseY[i]; pos[i*3+2] = baseZ[i]
+    col[i*3]   = 0;        col[i*3+1] = 0;        col[i*3+2] = 0  // negro al inicio
+  }
+
+  const geo = new THREE.BufferGeometry()
+  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
+  geo.setAttribute('color',    new THREE.BufferAttribute(col, 3))
+  const mat = new THREE.PointsMaterial({
+    size: 0.05, vertexColors: true,
+    transparent: true, opacity: 1.0,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  })
+  scene.add(new THREE.Points(geo, mat))
+
+  let prevTc = 0
   let id: number
   const animate = () => {
     id = requestAnimationFrame(animate)
-    const t = clock.getElapsedTime()
-    const visibleFrac = Math.min(t / 12, 1)
-    ;(pts.material as THREE.PointsMaterial).opacity = visibleFrac * 0.8
+    const t  = clock.getElapsedTime()
+    const tc = t % CYCLE
+
+    if (tc < prevTc) initParticles()
+    prevTc = tc
+
+    // Factor global de fade al final del ciclo
+    const fadeStart = FILL_DUR + STABLE
+    const ga = tc < fadeStart ? 1 : Math.max(0, 1 - (tc - fadeStart) / (CYCLE - fadeStart))
+
+    const arr  = geo.attributes.position.array as Float32Array
+    const carr = geo.attributes.color.array    as Float32Array
+
+    for (let i = 0; i < COUNT; i++) {
+      const age = tc - spawnTime[i]
+
+      if (age < 0) {
+        // No ha nacido todavía — invisible
+        carr[i*3] = 0; carr[i*3+1] = 0; carr[i*3+2] = 0
+      } else {
+        // Deriva muy lenta desde la posición base
+        arr[i*3]   = baseX[i] + driftX[i] * age * 60
+        arr[i*3+1] = baseY[i] + driftY[i] * age * 60
+        arr[i*3+2] = baseZ[i]
+
+        const b = brightness[i]
+        if (age < 0.45) {
+          // Destello de nacimiento: blanco brillante → azul claro (#3498DB)
+          const p = age / 0.45
+          carr[i*3]   = (0.9 - p * 0.70) * ga
+          carr[i*3+1] = (0.9 - p * 0.30) * ga
+          carr[i*3+2] = (1.0 - p * 0.14) * ga
+        } else {
+          // Vida normal — azul claro con leve respiración individual
+          const breathe = 0.85 + Math.sin(t * 0.4 + i * 0.15) * 0.15
+          carr[i*3]   = 0.20 * b * breathe * ga
+          carr[i*3+1] = 0.60 * b * breathe * ga
+          carr[i*3+2] = 0.86 * b * breathe * ga
+        }
+      }
+    }
+    geo.attributes.position.needsUpdate = true
+    geo.attributes.color.needsUpdate    = true
     renderer.render(scene, camera)
   }
   animate()
@@ -1063,43 +1217,108 @@ export function scene15(canvas: HTMLCanvasElement): SceneCleanup {
   const removeResize = addResizeHandler(renderer, camera)
   camera.position.z = 7
 
-  const count = 1200
-  const radii = new Float32Array(count)
-  const speeds = new Float32Array(count)
-  const offsets = new Float32Array(count)
-  const heights = new Float32Array(count)
-  const colors = new Float32Array(count * 3)
+  const CYCLE = 20
 
-  const palette = [0x27ae60, 0xf39c12, 0x2980b9, 0xe74c3c, 0x8e44ad, 0x1abc9c]
-
-  for (let i = 0; i < count; i++) {
-    radii[i] = 0.5 + Math.random() * 3.5
-    speeds[i] = 0.2 + Math.random() * 0.8
-    offsets[i] = Math.random() * Math.PI * 2
-    heights[i] = (Math.random() - 0.5) * 4
-    const c = new THREE.Color(palette[Math.floor(Math.random() * palette.length)])
-    colors[i*3] = c.r; colors[i*3+1] = c.g; colors[i*3+2] = c.b
-  }
-
+  const count = 2000
   const geo = new THREE.BufferGeometry()
   const pos = new Float32Array(count * 3)
+  const col = new Float32Array(count * 3)
+
+  const targetPos = new Float32Array(count * 3)
+  const scatterPos = new Float32Array(count * 3)
+  const delay = new Float32Array(count)
+
+  const palette = [0xd35400, 0xe67e22, 0xf39c12, 0xf5b041, 0xdc7633]
+
+  for (let i = 0; i < count; i++) {
+    scatterPos[i * 3] = (Math.random() - 0.5) * 10
+    scatterPos[i * 3 + 1] = (Math.random() - 0.5) * 8
+    scatterPos[i * 3 + 2] = (Math.random() - 0.5) * 4
+
+    const c = new THREE.Color(palette[Math.floor(Math.random() * palette.length)])
+    col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b
+
+    delay[i] = Math.random() * 0.3
+  }
+
+  const layers = 14
+  const pyramidH = 5.5
+  const halfBase = 2.8
+  let idx = 0
+  for (let layer = 0; layer < layers; layer++) {
+    const t = layer / layers
+    const halfW = halfBase * (1 - t)
+    const y = -2.8 + layer * (pyramidH / layers)
+    const perLayer = Math.floor(count / layers)
+    for (let j = 0; j < perLayer && idx < count; j++) {
+      const side = Math.floor(Math.random() * 4)
+      const edgeDist = Math.random()
+      const innerShrink = 0.15 + Math.random() * 0.85
+      const hw = halfW * innerShrink
+      if (side === 0) {
+        targetPos[idx * 3] = -hw + edgeDist * hw * 2
+        targetPos[idx * 3 + 2] = -hw
+      } else if (side === 1) {
+        targetPos[idx * 3] = -hw + edgeDist * hw * 2
+        targetPos[idx * 3 + 2] = hw
+      } else if (side === 2) {
+        targetPos[idx * 3] = -hw
+        targetPos[idx * 3 + 2] = -hw + edgeDist * hw * 2
+      } else {
+        targetPos[idx * 3] = hw
+        targetPos[idx * 3 + 2] = -hw + edgeDist * hw * 2
+      }
+      targetPos[idx * 3 + 1] = y
+      idx++
+    }
+  }
+  while (idx < count) {
+    targetPos[idx * 3] = (Math.random() - 0.5) * 0.5
+    targetPos[idx * 3 + 1] = -2.8 + Math.random() * 5
+    targetPos[idx * 3 + 2] = (Math.random() - 0.5) * 0.5
+    idx++
+  }
+
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-  geo.setAttribute('color', new THREE.BufferAttribute(colors, 3))
-  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.07, vertexColors: true, transparent: true, opacity: 0.9 }))
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({
+    size: 0.06, vertexColors: true, transparent: true, opacity: 0.85,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  }))
   scene.add(pts)
 
   let id: number
   const animate = () => {
     id = requestAnimationFrame(animate)
     const t = clock.getElapsedTime()
+    const ct = t % CYCLE
     const arr = geo.attributes.position.array as Float32Array
+
+    let buildProgress = 0
+    if (ct < 2) {
+      buildProgress = 0
+    } else if (ct < 10) {
+      buildProgress = (ct - 2) / 8
+    } else if (ct < 14) {
+      buildProgress = 1
+    } else if (ct < 18) {
+      buildProgress = 1 - (ct - 14) / 4
+    } else {
+      buildProgress = 0
+    }
+
+    buildProgress = buildProgress * buildProgress * (3 - 2 * buildProgress)
+
     for (let i = 0; i < count; i++) {
-      const angle = t * speeds[i] + offsets[i]
-      arr[i*3] = Math.cos(angle) * radii[i]
-      arr[i*3+1] = heights[i] + Math.sin(t * speeds[i] * 1.5 + offsets[i]) * 0.5
-      arr[i*3+2] = Math.sin(angle) * radii[i] * 0.3
+      const d = delay[i]
+      const p = Math.max(0, Math.min(1, (buildProgress - d) / (1 - d)))
+      const ep = p * p * (3 - 2 * p)
+      arr[i * 3] = scatterPos[i * 3] + (targetPos[i * 3] - scatterPos[i * 3]) * ep
+      arr[i * 3 + 1] = scatterPos[i * 3 + 1] + (targetPos[i * 3 + 1] - scatterPos[i * 3 + 1]) * ep
+      arr[i * 3 + 2] = scatterPos[i * 3 + 2] + (targetPos[i * 3 + 2] - scatterPos[i * 3 + 2]) * ep
     }
     geo.attributes.position.needsUpdate = true
+    pts.rotation.y = ct * 0.03
     renderer.render(scene, camera)
   }
   animate()
@@ -1119,7 +1338,7 @@ export function scene16(canvas: HTMLCanvasElement): SceneCleanup {
     const size = 0.08 + Math.random() * 0.2
     const m = new THREE.Mesh(
       new THREE.SphereGeometry(size, 16, 16),
-      new THREE.MeshBasicMaterial({ color: 0x8e44ad, wireframe: true, transparent: true, opacity: 0.6 })
+      new THREE.MeshBasicMaterial({ color: 0x2e86c1, wireframe: true, transparent: true, opacity: 0.6 })
     )
     m.position.set((Math.random()-0.5)*8, (Math.random()-0.5)*6, (Math.random()-0.5)*3)
     const vel = new THREE.Vector3((Math.random()-0.5)*0.01, (Math.random()-0.5)*0.01, 0)
@@ -1135,7 +1354,7 @@ export function scene16(canvas: HTMLCanvasElement): SceneCleanup {
     spiralPts.push(new THREE.Vector3(r * Math.cos(t), r * Math.sin(t) * 0.4, 0))
   }
   const spiralGeo = new THREE.BufferGeometry().setFromPoints(spiralPts)
-  const spiral = new THREE.Line(spiralGeo, new THREE.LineBasicMaterial({ color: 0xd4af37, transparent: true, opacity: 0.5 }))
+  const spiral = new THREE.Line(spiralGeo, new THREE.LineBasicMaterial({ color: 0x85c1e9, transparent: true, opacity: 0.5 }))
   scene.add(spiral)
 
   let id: number

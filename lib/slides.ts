@@ -123,7 +123,7 @@ export const slides: SlideData[] = [
     title: 'Deus sive Natura',
     subtitle: 'Solo existe una sustancia: Dios o Naturaleza. La libertad es el amor intelectual a Dios. "Los espíritus no se someten con la violencia, sino con el amor y la generosidad." El Estado debe liberar, no someter.',
     keywords: ['Panteísmo', 'Conatus', 'Amor Intelectual', 'Libertad'],
-    accent: '#2E86C1',
+    accent: '#117A65',
     svgFile: 'slide13.svg',
   },
   {
@@ -132,7 +132,7 @@ export const slides: SlideData[] = [
     title: 'La Tabula Rasa',
     subtitle: 'No existen ideas innatas. Todo conocimiento viene de la experiencia. Los derechos naturales —vida, libertad y propiedad— son inalienables. Si el Estado los viola, el pueblo tiene derecho a resistir.',
     keywords: ['Empirismo', 'Experiencia', 'Ideas Simples', 'Derechos Naturales'],
-    accent: '#2980B9',
+    accent: '#3498DB',
     svgFile: 'slide14.svg',
   },
   {
@@ -141,7 +141,7 @@ export const slides: SlideData[] = [
     title: 'El Carácter Primero, la Instrucción Después',
     subtitle: 'La formación moral precede a la intelectual. Los hábitos tempranos son decisivos. El juego enseña a medir las propias fuerzas. El honor y la estimación motivan más que el castigo físico.',
     keywords: ['Hábito', 'Carácter', 'Juego Educativo', 'Autodominio'],
-    accent: '#27AE60',
+    accent: '#D35400',
     svgFile: 'slide15.svg',
   },
   {
@@ -150,7 +150,7 @@ export const slides: SlideData[] = [
     title: 'Las Mónadas y los Cursos de la Historia',
     subtitle: 'Leibniz: cada alma es una mónada autónoma — educar es activar virtualidades internas. Vico: verum et factum — solo conocemos lo que hacemos; la historia cíclica es la educación del género humano.',
     keywords: ['Mónadas', 'Autoeducación', 'Verum Factum', 'Cursos y Recursos'],
-    accent: '#8E44AD',
+    accent: '#2E86C1',
     svgFile: 'slide16.svg',
   },
   {
