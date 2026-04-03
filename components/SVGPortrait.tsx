@@ -39,7 +39,6 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
     )
     if (!shapes.length) return
 
-    // Detect line-art: few paths AND at least one has stroke="currentColor"
     const isLineart =
       shapes.length < 120 &&
       shapes.some((s) => {
@@ -49,7 +48,6 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
       })
 
     if (isLineart) {
-      // ── DRAW-IN: each stroke traces itself ───────────────────────────────────
       shapes.forEach((el) => {
         const len = el.getTotalLength ? Math.ceil(el.getTotalLength()) : 300
         el.style.strokeDasharray = `${len}`
@@ -65,18 +63,17 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
       })
       window.setTimeout(() => startIdle(svgEl), 2500)
     } else {
-      // ── FADE + RISE: whole portrait fades up (Inkscape fill-based) ───────────
       svgEl.style.opacity = '0'
-      svgEl.style.transform = 'translateY(22px) scale(0.96)'
+      svgEl.style.transformOrigin = 'center center'
       animate(svgEl, {
         opacity: [0, 1],
-        translateY: [22, 0],
-        scale: [0.96, 1],
-        duration: 1100,
+        translateY: [30, 0],
+        scale: [0.92, 1],
+        duration: 1400,
         easing: 'easeOutExpo',
-        delay: 150,
+        delay: 200,
       })
-      window.setTimeout(() => startIdle(svgEl), 1400)
+      window.setTimeout(() => startIdle(svgEl), 1800)
     }
   }
 
@@ -101,7 +98,7 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
         if (svgEl) {
           svgEl.removeAttribute('width')
           svgEl.removeAttribute('height')
-          svgEl.style.cssText = 'width:100%;height:100%;overflow:visible;'
+          svgEl.style.cssText = 'width:100%;height:100%;overflow:visible;opacity:0;'
         }
 
         loadedSrc.current = src
@@ -129,7 +126,7 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
       style={{
         color: accent,
         opacity: visible ? 1 : 0,
-        transition: 'opacity 0.8s ease',
+        transition: 'opacity 0.5s ease',
       }}
     />
   )
