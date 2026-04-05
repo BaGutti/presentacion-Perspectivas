@@ -296,7 +296,8 @@ export function scene04(canvas: HTMLCanvasElement): SceneCleanup {
 export function scene05(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
-  camera.position.z = 7
+  camera.position.set(0, 4, 8)
+  camera.lookAt(0, 0, 0)
 
   const colors = [0x27ae60, 0xf39c12, 0x8e44ad]
   const orbs: THREE.Points[] = []
@@ -318,13 +319,17 @@ export function scene05(canvas: HTMLCanvasElement): SceneCleanup {
     scene.add(orb)
   })
 
-  // Orbit rings
+  // Orbit rings - circles in XZ plane
   const ringColors = [0x27ae60, 0xf39c12, 0x8e44ad]
   ringColors.forEach((color, idx) => {
-    const rGeo = new THREE.RingGeometry(2.5 + idx * 0.8, 2.51 + idx * 0.8, 128)
-    const rMat = new THREE.MeshBasicMaterial({ color, side: THREE.DoubleSide, transparent: true, opacity: 0.15 })
-    const ring = new THREE.Mesh(rGeo, rMat)
-    ring.rotation.x = Math.PI / 2 + idx * 0.3
+    const radius = 2.5 + idx * 1.0
+    const curve = new THREE.EllipseCurve(0, 0, radius, radius, 0, 2 * Math.PI, false, 0)
+    const points = curve.getPoints(128)
+    const rGeo = new THREE.BufferGeometry().setFromPoints(
+      points.map(p => new THREE.Vector3(p.x, 0, p.y))
+    )
+    const rMat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0.7 })
+    const ring = new THREE.Line(rGeo, rMat)
     scene.add(ring)
   })
 
@@ -333,12 +338,12 @@ export function scene05(canvas: HTMLCanvasElement): SceneCleanup {
     id = requestAnimationFrame(animate)
     const t = clock.getElapsedTime()
     orbs.forEach((orb, idx) => {
-      const speed = 0.3 + idx * 0.15
-      const radius = 2.5 + idx * 0.8
+      // órbitas más cercanas al centro se mueven más rápido (como planetas internos)
+      const speed = 0.9 - idx * 0.2
+      const radius = 2.5 + idx * 1.0
       orb.position.x = Math.cos(t * speed) * radius
-      orb.position.y = Math.sin(t * speed * 0.5) * 0.8
-      orb.position.z = Math.sin(t * speed) * radius * 0.3
-      orb.rotation.y = t * 0.5
+      orb.position.z = Math.sin(t * speed) * radius
+      orb.position.y = 0
     })
     renderer.render(scene, camera)
   }
@@ -1374,43 +1379,143 @@ export function scene16(canvas: HTMLCanvasElement): SceneCleanup {
   return () => { cancelAnimationFrame(id); removeResize(); renderer.dispose() }
 }
 
-// ─── SLIDE 17: Hume — Niebla de incertidumbre ────────────────────────────────
+// ─── SLIDE 17: Hume — Acumulación de Ideas ─────────────────────────────────────
+// Las partículas son grises. Cada ciclo, 1/4 se reunen en un punto aleatorio
+// y se iluminan (foco) = acumulación de idea. Luego se dispersan.
 export function scene17(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
-  camera.position.z = 5
-  scene.fog = new THREE.FogExp2(0x000000, 0.15)
+  camera.position.z = 8
 
-  const count = 4000
+  const count = 600
+  const groupSize = Math.floor(count / 4)  // 1/4 en lugar de 1/8
   const geo = new THREE.BufferGeometry()
   const pos = new Float32Array(count * 3)
   const vel = new Float32Array(count * 3)
+  const col = new Float32Array(count * 3)
+  const target = new Float32Array(count * 3)
+  const isActive = new Uint8Array(count)
+  const brightness = new Float32Array(count)  // nivel de brillo (0-1)
+
+  const ideaColor = { r: 0.2, g: 0.25, b: 0.35 }
+  const focusColor = { r: 1.0, g: 0.7, b: 0.2 }  // más naranja/dorado
+
+  const CYCLE = 7  // ciclo más largo
 
   for (let i = 0; i < count; i++) {
-    pos[i*3] = (Math.random()-0.5)*10
-    pos[i*3+1] = (Math.random()-0.5)*8
-    pos[i*3+2] = (Math.random()-0.5)*5
-    vel[i*3] = (Math.random()-0.5)*0.003
-    vel[i*3+1] = (Math.random()-0.5)*0.003
-    vel[i*3+2] = (Math.random()-0.5)*0.002
+    pos[i*3] = (Math.random()-0.5) * 12
+    pos[i*3+1] = (Math.random()-0.5) * 8
+    pos[i*3+2] = (Math.random()-0.5) * 4
+    vel[i*3] = (Math.random()-0.5) * 0.008
+    vel[i*3+1] = (Math.random()-0.5) * 0.008
+    vel[i*3+2] = (Math.random()-0.5) * 0.004
+    target[i*3] = pos[i*3]
+    target[i*3+1] = pos[i*3+1]
+    target[i*3+2] = pos[i*3+2]
+    isActive[i] = 0
+    brightness[i] = 0
+    col[i*3] = ideaColor.r
+    col[i*3+1] = ideaColor.g
+    col[i*3+2] = ideaColor.b
   }
+
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
-  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ size: 0.03, color: 0x7f8c8d, transparent: true, opacity: 0.45 }))
+  geo.setAttribute('color', new THREE.BufferAttribute(col, 3))
+
+  const pts = new THREE.Points(geo, new THREE.PointsMaterial({ 
+    size: 0.1, 
+    vertexColors: true, 
+    transparent: true, 
+    opacity: 1,
+    sizeAttenuation: true
+  }))
   scene.add(pts)
+
+  let focusPoint = { x: 0, y: 0, z: 0 }
+  let cycleStart = 0
+  let lastCycleNum = -1
 
   let id: number
   const animate = () => {
     id = requestAnimationFrame(animate)
     const t = clock.getElapsedTime()
     const arr = geo.attributes.position.array as Float32Array
-    for (let i = 0; i < count; i++) {
-      arr[i*3] += vel[i*3] + Math.sin(t * 0.2 + i) * 0.001
-      arr[i*3+1] += vel[i*3+1]
-      if (Math.abs(arr[i*3]) > 5) vel[i*3] *= -1
-      if (Math.abs(arr[i*3+1]) > 4) vel[i*3+1] *= -1
+    const colors = geo.attributes.color.array as Float32Array
+
+    const cycleTime = t % CYCLE
+    const inFocusPhase = cycleTime > 1 && cycleTime < 5  // foco más largo
+    const exitPhase = cycleTime >= 5
+
+    // Nuevo ciclo - usar tiempo absoluto para mayor aleatoriedad
+    const absoluteCycle = Math.floor(t / CYCLE)
+    if (cycleTime < 1 && absoluteCycle > lastCycleNum) {
+      lastCycleNum = absoluteCycle
+      focusPoint = {
+        x: (Math.random()-0.5) * 10,
+        y: (Math.random()-0.5) * 7,
+        z: (Math.random()-0.5) * 2
+      }
+      for (let i = 0; i < count; i++) isActive[i] = 0
+      const indices = Array.from({length: count}, (_, i) => i)
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [indices[i], indices[j]] = [indices[j], indices[i]]
+      }
+      for (let i = 0; i < groupSize; i++) {
+        isActive[indices[i]] = 1
+        brightness[indices[i]] = 0
+        target[indices[i]*3] = focusPoint.x + (Math.random()-0.5) * 0.6
+        target[indices[i]*3+1] = focusPoint.y + (Math.random()-0.5) * 0.6
+        target[indices[i]*3+2] = focusPoint.z + (Math.random()-0.5) * 0.3
+      }
     }
+
+    for (let i = 0; i < count; i++) {
+      const ix = i*3, iy = i*3+1, iz = i*3+2
+
+      if (isActive[i]) {
+        if (inFocusPhase) {
+          // Ir al foco
+          arr[ix] += (target[ix] - arr[ix]) * 0.03
+          arr[iy] += (target[iy] - arr[iy]) * 0.03
+          arr[iz] += (target[iz] - arr[iz]) * 0.03
+          // Aumentar brillo
+          brightness[i] += 0.025
+          if (brightness[i] > 1) brightness[i] = 1
+        } else if (exitPhase) {
+          // Transición orgánica al salir del foco
+          brightness[i] *= 0.92
+          arr[ix] += (Math.random()-0.5) * 0.02
+          arr[iy] += (Math.random()-0.5) * 0.02
+          arr[iz] += (Math.random()-0.5) * 0.01
+        } else {
+          // Fase inicial: moverse hacia el foco
+          arr[ix] += (target[ix] - arr[ix]) * 0.02
+          arr[iy] += (target[iy] - arr[iy]) * 0.02
+          arr[iz] += (target[iz] - arr[iz]) * 0.02
+        }
+      } else {
+        // Movimiento aleatorio normal
+        arr[ix] += vel[ix]
+        arr[iy] += vel[iy]
+        arr[iz] += vel[iz]
+
+        if (Math.abs(arr[ix]) > 6) vel[ix] *= -1
+        if (Math.abs(arr[iy]) > 4) vel[iy] *= -1
+        if (Math.abs(arr[iz]) > 2) vel[iz] *= -1
+
+        // Decay lento del brillo residual
+        brightness[i] *= 0.98
+      }
+
+      const b = brightness[i]
+      colors[ix] = ideaColor.r + (focusColor.r - ideaColor.r) * b
+      colors[iy] = ideaColor.g + (focusColor.g - ideaColor.g) * b
+      colors[iz] = ideaColor.b + (focusColor.b - ideaColor.b) * b
+    }
+
     geo.attributes.position.needsUpdate = true
-    ;(pts.material as THREE.PointsMaterial).opacity = 0.3 + Math.sin(t * 0.3) * 0.15
+    geo.attributes.color.needsUpdate = true
     renderer.render(scene, camera)
   }
   animate()
