@@ -123,7 +123,7 @@ export function scene02(canvas: HTMLCanvasElement): SceneCleanup {
     prevT    = t
 
     const arr      = geo.attributes.position.array as Float32Array
-    const cycleNum = Math.floor(t / CYCLE)
+    const cyclenumNodesum = Math.floor(t / CYCLE)
     const tc       = t % CYCLE  // tiempo dentro del ciclo actual [0, 24)
 
     // ── Calcular lerp según la fase del ciclo ─────────────────────────────────
@@ -142,8 +142,8 @@ export function scene02(canvas: HTMLCanvasElement): SceneCleanup {
     }
 
     // ── Re-aleatorizar velocidades al inicio de la fase de dispersión ─────────
-    if (tc >= 19 && dispersalReset !== cycleNum) {
-      dispersalReset = cycleNum
+    if (tc >= 19 && dispersalReset !== cyclenumNodesum) {
+      dispersalReset = cyclenumNodesum
       for (let i = 0; i < count; i++) {
         vel[i * 3]     = (Math.random() - 0.5) * 0.06
         vel[i * 3 + 1] = (Math.random() - 0.5) * 0.06
@@ -355,7 +355,7 @@ export function scene05(canvas: HTMLCanvasElement): SceneCleanup {
 // De las llamas de la Guerra de los Treinta Años emergen ascuas que suben
 // lentamente y se desvanecen en la oscuridad — la luz de Comenio que persiste
 // y se eleva a pesar de la devastación del exilio.
-// Naranja/ámbar (accent #E67E22), AdditiveBlending para efecto de brasa real.
+// numNodesaranja/ámbar (accent #E67E22), AdditiveBlending para efecto de brasa real.
 export function scene06(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
@@ -467,7 +467,7 @@ export function scene07(canvas: HTMLCanvasElement): SceneCleanup {
     ))
   }
 
-  // Node meshes
+  // numNodesode meshes
   const nodeMeshes: THREE.Mesh[] = []
   nodes.forEach(pos => {
     const m = new THREE.Mesh(
@@ -593,7 +593,7 @@ export function scene09(canvas: HTMLCanvasElement): SceneCleanup {
     outerRays.push(outer)
     scene.add(outer)
 
-    // Núcleo interior: cono estrecho y brillante
+    // numNodesúcleo interior: cono estrecho y brillante
     const innerGeo = new THREE.ConeGeometry(0.12 + Math.random() * 0.08, 10, 20, 1, true)
     const innerMat = new THREE.MeshBasicMaterial({
       color: 0xfff4cc,
@@ -691,13 +691,13 @@ export function scene10(canvas: HTMLCanvasElement): SceneCleanup {
     return a * a * a - nx * nx * ny * ny * ny <= 0
   }
 
-  const COUNT = 2800 // partículas por mitad
-  const lPos  = new Float32Array(COUNT * 3)
-  const rPos  = new Float32Array(COUNT * 3)
+  const COUnumNodesT = 2800 // partículas por mitad
+  const lPos  = new Float32Array(COUnumNodesT * 3)
+  const rPos  = new Float32Array(COUnumNodesT * 3)
 
   // Mitad izquierda — Razón (azul frío)
   let filled = 0
-  while (filled < COUNT) {
+  while (filled < COUnumNodesT) {
     const x = -Math.random() * S                    // x ∈ [−S, 0]
     const y = (Math.random() - 0.5) * S * 2.5
     if (inHeart(x, y)) {
@@ -710,7 +710,7 @@ export function scene10(canvas: HTMLCanvasElement): SceneCleanup {
 
   // Mitad derecha — Corazón (rojo cálido)
   filled = 0
-  while (filled < COUNT) {
+  while (filled < COUnumNodesT) {
     const x = Math.random() * S                     // x ∈ [0, S]
     const y = (Math.random() - 0.5) * S * 2.5
     if (inHeart(x, y)) {
@@ -803,12 +803,12 @@ export function scene11(canvas: HTMLCanvasElement): SceneCleanup {
     [ 4.0,-1.0, 0.0], [-4.0,-2.0, 0.2], [-1.8,-2.4,-0.1], [ 0.5,-2.8, 0.1],
     [ 3.0,-2.6, 0.0], [ 4.8,-2.2, 0.2],
   ]
-  const N = nodePos.length  // 18
+  const numNodes = nodePos.length  // 18
 
   const APPEAR = 1.2   // segundos entre cada nodo nuevo
   const STABLE = 7.0   // segundos con la red completa
   const FADE   = 2.5   // segundos de fade-out
-  const CYCLE  = N * APPEAR + STABLE + FADE  // ≈30s
+  const CYCLE  = numNodes * APPEAR + STABLE + FADE  // ≈30s
 
   // ── Meshes de nodos (invisibles al inicio) ────────────────────────────────
   const nodeMeshes = nodePos.map(([x, y, z]) => {
@@ -823,15 +823,15 @@ export function scene11(canvas: HTMLCanvasElement): SceneCleanup {
   })
 
   // ── Conexiones: precomputar todos los pares dentro de distancia ───────────
-  const CONN_DIST = 3.0
+  const COnumNodesnumNodes_DIST = 3.0
   const connData: { i: number; j: number }[] = []
   const connLines: THREE.Line[] = []
 
-  for (let i = 0; i < N; i++) {
-    for (let j = i + 1; j < N; j++) {
+  for (let i = 0; i < nodePos.length; i++) {
+    for (let j = i + 1; j < numNodes; j++) {
       const [ax, ay, az] = nodePos[i]
       const [bx, by, bz] = nodePos[j]
-      if (Math.hypot(ax - bx, ay - by, az - bz) < CONN_DIST) {
+      if (Math.hypot(ax - bx, ay - by, az - bz) < COnumNodesnumNodes_DIST) {
         connData.push({ i, j })
         const g = new THREE.BufferGeometry().setFromPoints([
           new THREE.Vector3(ax, ay, az),
@@ -870,7 +870,7 @@ export function scene11(canvas: HTMLCanvasElement): SceneCleanup {
 
   // Alpha global: 1 durante crecimiento y estabilidad, baja a 0 en fade-out
   const globalAlpha = (tc: number) =>
-    tc < N * APPEAR + STABLE ? 1 : Math.max(0, 1 - (tc - N * APPEAR - STABLE) / FADE)
+    tc < numNodes * APPEAR + STABLE ? 1 : Math.max(0, 1 - (tc - numNodes * APPEAR - STABLE) / FADE)
 
   let id: number
   const animate = () => {
@@ -879,8 +879,8 @@ export function scene11(canvas: HTMLCanvasElement): SceneCleanup {
     const tc = t % CYCLE
     const ga = globalAlpha(tc)
 
-    // ── Nodos ───────────────────────────────────────────────────────────────
-    for (let i = 0; i < N; i++) {
+    // ── numNodesodos ───────────────────────────────────────────────────────────────
+    for (let i = 0; i < nodePos.length; i++) {
       const age = tc - i * APPEAR
       const mat = nodeMeshes[i].material as THREE.MeshBasicMaterial
       if (age < 0) {
@@ -938,7 +938,7 @@ export function scene11(canvas: HTMLCanvasElement): SceneCleanup {
   return () => { cancelAnimationFrame(id); removeResize(); renderer.dispose() }
 }
 
-// ─── SLIDE 12: Hobbes — Estado de Naturaleza → Leviatán ──────────────────────
+// ─── SLIDE 12: Hobbes — Estado de numNodesaturaleza → Leviatán ──────────────────────
 // Ciclo de 24s que narra el pensamiento hobbsiano:
 //   0– 8s : caos puro — homo homini lupus, partículas colisionan libremente
 //   8–14s : el Leviatán emerge y atrae las partículas hacia su órbita
@@ -950,15 +950,15 @@ export function scene12(canvas: HTMLCanvasElement): SceneCleanup {
   camera.position.z = 7
   renderer.setClearColor(0x050000, 1)
 
-  const COUNT = 1800
-  const pos         = new Float32Array(COUNT * 3)
-  const vel         = new Float32Array(COUNT * 3)
-  const orbitAngle  = new Float32Array(COUNT)
-  const orbitRadius = new Float32Array(COUNT)
-  const orbitSpeed  = new Float32Array(COUNT)
+  const COUnumNodesT = 1800
+  const pos         = new Float32Array(COUnumNodesT * 3)
+  const vel         = new Float32Array(COUnumNodesT * 3)
+  const orbitAngle  = new Float32Array(COUnumNodesT)
+  const orbitRadius = new Float32Array(COUnumNodesT)
+  const orbitSpeed  = new Float32Array(COUnumNodesT)
 
   function randomize() {
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < COUnumNodesT; i++) {
       pos[i*3]   = (Math.random() - 0.5) * 10
       pos[i*3+1] = (Math.random() - 0.5) * 8
       pos[i*3+2] = (Math.random() - 0.5) * 2
@@ -975,8 +975,8 @@ export function scene12(canvas: HTMLCanvasElement): SceneCleanup {
   const geo = new THREE.BufferGeometry()
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3))
 
-  const col = new Float32Array(COUNT * 3)
-  for (let i = 0; i < COUNT; i++) {
+  const col = new Float32Array(COUnumNodesT * 3)
+  for (let i = 0; i < COUnumNodesT; i++) {
     const t = Math.random()
     col[i*3]   = 0.5 + t * 0.5  // rojo vivo → carmesí
     col[i*3+1] = 0.03 + t * 0.07
@@ -1041,7 +1041,7 @@ export function scene12(canvas: HTMLCanvasElement): SceneCleanup {
     halo.scale.setScalar(1 + Math.sin(t * 1.5) * 0.15 * ease)
 
     const arr = geo.attributes.position.array as Float32Array
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < COUnumNodesT; i++) {
       // Movimiento caótico (se atenúa cuando sube el orden)
       arr[i*3]   += vel[i*3]   * (1 - ease * 0.85)
       arr[i*3+1] += vel[i*3+1] * (1 - ease * 0.85)
@@ -1067,7 +1067,7 @@ export function scene12(canvas: HTMLCanvasElement): SceneCleanup {
   return () => { cancelAnimationFrame(id); removeResize(); renderer.dispose() }
 }
 
-// ─── SLIDE 13: Spinoza — Deus sive Natura ────────────────────────────────────
+// ─── SLIDE 13: Spinoza — Deus sive numNodesatura ────────────────────────────────────
 export function scene13(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
@@ -1087,7 +1087,7 @@ export function scene13(canvas: HTMLCanvasElement): SceneCleanup {
     pos[i*3+1] = (R + r * Math.cos(v)) * Math.sin(u)
     pos[i*3+2] = r * Math.sin(v)
     const t = Math.random()
-    // Esmeralda oscuro → teal vivo: evoca "Deus sive Natura" (lo orgánico-infinito)
+    // Esmeralda oscuro → teal vivo: evoca "Deus sive numNodesatura" (lo orgánico-infinito)
     col[i*3]   = 0.04 * (1-t) + 0.18 * t   // casi sin rojo
     col[i*3+1] = 0.40 * (1-t) + 0.65 * t   // verde dominante
     col[i*3+2] = 0.32 * (1-t) + 0.50 * t   // teal
@@ -1124,18 +1124,18 @@ export function scene14(canvas: HTMLCanvasElement): SceneCleanup {
   const STABLE   =  4
   // FADE_DUR = CYCLE - FILL_DUR - STABLE = 2s
 
-  const COUNT      = 1800
-  const spawnTime  = new Float32Array(COUNT)
-  const baseX      = new Float32Array(COUNT)
-  const baseY      = new Float32Array(COUNT)
-  const baseZ      = new Float32Array(COUNT)
-  const driftX     = new Float32Array(COUNT)
-  const driftY     = new Float32Array(COUNT)
-  const brightness = new Float32Array(COUNT)
+  const COUnumNodesT      = 1800
+  const spawnTime  = new Float32Array(COUnumNodesT)
+  const baseX      = new Float32Array(COUnumNodesT)
+  const baseY      = new Float32Array(COUnumNodesT)
+  const baseZ      = new Float32Array(COUnumNodesT)
+  const driftX     = new Float32Array(COUnumNodesT)
+  const driftY     = new Float32Array(COUnumNodesT)
+  const brightness = new Float32Array(COUnumNodesT)
 
   function initParticles() {
-    for (let i = 0; i < COUNT; i++) {
-      spawnTime[i]  = (i / COUNT) * FILL_DUR + Math.random() * (FILL_DUR / COUNT) * 3
+    for (let i = 0; i < COUnumNodesT; i++) {
+      spawnTime[i]  = (i / COUnumNodesT) * FILL_DUR + Math.random() * (FILL_DUR / COUnumNodesT) * 3
       baseX[i]      = (Math.random() - 0.5) * 9
       baseY[i]      = (Math.random() - 0.5) * 6
       baseZ[i]      = (Math.random() - 0.5) * 3
@@ -1146,9 +1146,9 @@ export function scene14(canvas: HTMLCanvasElement): SceneCleanup {
   }
   initParticles()
 
-  const pos = new Float32Array(COUNT * 3)
-  const col = new Float32Array(COUNT * 3)
-  for (let i = 0; i < COUNT; i++) {
+  const pos = new Float32Array(COUnumNodesT * 3)
+  const col = new Float32Array(COUnumNodesT * 3)
+  for (let i = 0; i < COUnumNodesT; i++) {
     pos[i*3]   = baseX[i]; pos[i*3+1] = baseY[i]; pos[i*3+2] = baseZ[i]
     col[i*3]   = 0;        col[i*3+1] = 0;        col[i*3+2] = 0  // negro al inicio
   }
@@ -1180,11 +1180,11 @@ export function scene14(canvas: HTMLCanvasElement): SceneCleanup {
     const arr  = geo.attributes.position.array as Float32Array
     const carr = geo.attributes.color.array    as Float32Array
 
-    for (let i = 0; i < COUNT; i++) {
+    for (let i = 0; i < COUnumNodesT; i++) {
       const age = tc - spawnTime[i]
 
       if (age < 0) {
-        // No ha nacido todavía — invisible
+        // numNodeso ha nacido todavía — invisible
         carr[i*3] = 0; carr[i*3+1] = 0; carr[i*3+2] = 0
       } else {
         // Deriva muy lenta desde la posición base
@@ -1433,7 +1433,7 @@ export function scene17(canvas: HTMLCanvasElement): SceneCleanup {
 
   let focusPoint = { x: 0, y: 0, z: 0 }
   let cycleStart = 0
-  let lastCycleNum = -1
+  let lastCyclenumNodesum = -1
 
   let id: number
   const animate = () => {
@@ -1446,10 +1446,10 @@ export function scene17(canvas: HTMLCanvasElement): SceneCleanup {
     const inFocusPhase = cycleTime > 1 && cycleTime < 5  // foco más largo
     const exitPhase = cycleTime >= 5
 
-    // Nuevo ciclo - usar tiempo absoluto para mayor aleatoriedad
+    // numNodesuevo ciclo - usar tiempo absoluto para mayor aleatoriedad
     const absoluteCycle = Math.floor(t / CYCLE)
-    if (cycleTime < 1 && absoluteCycle > lastCycleNum) {
-      lastCycleNum = absoluteCycle
+    if (cycleTime < 1 && absoluteCycle > lastCyclenumNodesum) {
+      lastCyclenumNodesum = absoluteCycle
       focusPoint = {
         x: (Math.random()-0.5) * 10,
         y: (Math.random()-0.5) * 7,
@@ -1581,57 +1581,288 @@ export function scene18(canvas: HTMLCanvasElement): SceneCleanup {
   return () => { cancelAnimationFrame(id); removeResize(); renderer.dispose() }
 }
 
-// ─── SLIDE 19: Proyectos Ilustrados — Red incompleta ─────────────────────────
+// ─── SLIDE 19: Proyectos Ilustrados — Ideal vs Realidad ────────────────────────
+// Nodos dorados (Condorcet) y rojos (La Chalotais) aparecen.
+// Partículas fluyen: amarillas de dorados, rojas de rojos.
+// Cuando cruzan al tipo opuesto, el puente se rompe.
+// Al final, los nodos dorados desaparecen = ganó la burguesía.
 export function scene19(canvas: HTMLCanvasElement): SceneCleanup {
   const { renderer, scene, camera, clock } = createBaseContext(canvas)
   const removeResize = addResizeHandler(renderer, camera)
-  camera.position.z = 7
+  camera.position.z = 8
 
-  const nodeCount = 40
-  const nodes: THREE.Vector3[] = []
+  const idealColor = 0xffd700
+  const realityColor = 0xe74c3c
+
+  const N = 24
+  const nodePos: [number, number, number][] = []
+  
+  for (let pair = 0; pair < N / 2; pair++) {
+    const cx = (Math.random() - 0.5) * 16
+    const cy = 4.5 - pair * 0.5 + (Math.random() - 0.5) * 0.4
+    const cz = (Math.random() - 0.5) * 0.5
+    const offset = 0.4 + Math.random() * 0.3
+    const angle = Math.random() * Math.PI * 2
+    nodePos.push([cx + Math.cos(angle) * offset, cy + Math.sin(angle) * offset * 0.5, cz])
+    nodePos.push([cx - Math.cos(angle) * offset, cy - Math.sin(angle) * offset * 0.5, cz + 0.15])
+  }
+
   const nodeMeshes: THREE.Mesh[] = []
-
-  for (let i = 0; i < nodeCount; i++) {
-    const pos = new THREE.Vector3(
-      (Math.random()-0.5)*10,
-      (Math.random()-0.5)*7,
-      (Math.random()-0.5)*2
-    )
-    nodes.push(pos)
-    const active = Math.random() > 0.4
+  for (let i = 0; i < nodePos.length; i++) {
+    const isIdeal = i % 2 === 0
     const m = new THREE.Mesh(
-      new THREE.SphereGeometry(0.07, 8, 8),
-      new THREE.MeshBasicMaterial({ color: active ? 0xe74c3c : 0x333333, transparent: true, opacity: active ? 0.9 : 0.3 })
+      new THREE.SphereGeometry(0.18, 12, 12),
+      new THREE.MeshBasicMaterial({ color: isIdeal ? idealColor : realityColor, transparent: true, opacity: 0 })
     )
-    m.position.copy(pos)
+    m.position.set(...nodePos[i])
+    m.scale.setScalar(0.01)
     scene.add(m)
     nodeMeshes.push(m)
   }
 
-  // Broken connections
-  nodes.forEach((a, i) => {
-    nodes.forEach((b, j) => {
-      if (j <= i) return
-      if (a.distanceTo(b) < 3 && Math.random() > 0.6) {
-        const broken = Math.random() > 0.4
-        const geo = new THREE.BufferGeometry().setFromPoints([a, b])
-        const line = new THREE.Line(geo, new THREE.LineBasicMaterial({
-          color: broken ? 0x333333 : 0xe74c3c,
-          transparent: true,
-          opacity: broken ? 0.1 : 0.3
-        }))
-        scene.add(line)
+  // Conexiones
+  const CONN_DIST = 3.0
+  interface Conn { i: number; j: number; cross: boolean }
+  const connData: Conn[] = []
+  for (let i = 0; i < nodePos.length; i++) {
+    for (let j = i + 1; j < nodePos.length; j++) {
+      const [ax, ay, az] = nodePos[i]
+      const [bx, by, bz] = nodePos[j]
+      const dist = Math.hypot(ax - bx, ay - by, az - bz)
+      if (dist < CONN_DIST) {
+        const cross = (i % 2) !== (j % 2)
+        connData.push({ i, j, cross })
       }
-    })
+    }
+  }
+
+  // Líneas
+  const lineMeshes: THREE.Line[] = []
+  const lineProgress: number[] = []
+  const lineMaxProgress: number[] = []
+
+  connData.forEach(({ i, j, cross }) => {
+    const [ax, ay, az] = nodePos[i]
+    const [bx, by, bz] = nodePos[j]
+    const g = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(ax, ay, az), new THREE.Vector3(bx, by, bz)])
+    const color = cross ? 0xff6b6b : (i % 2 === 0 ? idealColor : realityColor)
+    const mat = new THREE.LineBasicMaterial({ color, transparent: true, opacity: 0 })
+    const line = new THREE.Line(g, mat)
+    scene.add(line)
+    lineMeshes.push(line)
+    lineProgress.push(0)
+    lineMaxProgress.push(cross ? 0.4 + Math.random() * 0.3 : 1.2)
   })
+
+  // Partículas fluyendo
+  const PPC = 2
+  const totalFlow = connData.length * PPC
+  const flowGeo = new THREE.BufferGeometry()
+  const flowPos = new Float32Array(totalFlow * 3)
+  const flowCol = new Float32Array(totalFlow * 3)
+  const flowProg = new Float32Array(totalFlow)
+  const flowSpeed = new Float32Array(totalFlow)
+  const flowConn = new Int32Array(totalFlow)
+  const flowOrigin = new Int8Array(totalFlow)
+  const flowBroken = new Uint8Array(totalFlow)  // 1 = connection broken
+
+  // Asignar colores desde el inicio
+  for (let i = 0; i < totalFlow; i++) {
+    flowProg[i] = Math.random()
+    flowSpeed[i] = 0.003 + Math.random() * 0.003
+    flowConn[i] = Math.floor(i / PPC)
+    const conn = connData[flowConn[i]]
+    flowOrigin[i] = conn.i % 2 === 0 ? 0 : 1
+    
+    // Posición inicial
+    const [sx, sy, sz] = nodePos[conn.i]
+    flowPos[i*3] = sx
+    flowPos[i*3+1] = sy
+    flowPos[i*3+2] = sz
+    
+    // Color según tipo de origen (inicializar con 0 para que no sea negro)
+    if (flowOrigin[i] === 0) {
+      flowCol[i*3] = 1.0
+      flowCol[i*3+1] = 0.84
+      flowCol[i*3+2] = 0.0
+    } else {
+      flowCol[i*3] = 0.91
+      flowCol[i*3+1] = 0.30
+      flowCol[i*3+2] = 0.24
+    }
+  }
+
+  flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPos, 3))
+  flowGeo.setAttribute('color', new THREE.BufferAttribute(flowCol, 3))
+  
+  // Usar un solo color base pero con vertexColors
+  const flowMat = new THREE.PointsMaterial({
+    size: 0.04,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  })
+  const flowPts = new THREE.Points(flowGeo, flowMat)
+  scene.add(flowPts)
+
+  const APPEAR = 0.8
+  const STABLE = 8
+  const FADE_GOLD = 3
+  const FADE_RED = 5
+  const FADE = FADE_GOLD + FADE_RED
+  const numNodes = nodePos.length
+  const CYCLE = numNodes * APPEAR + STABLE + FADE
 
   let id: number
   const animate = () => {
     id = requestAnimationFrame(animate)
     const t = clock.getElapsedTime()
-    nodeMeshes.forEach((m, i) => {
-      m.position.y = nodes[i].y + Math.sin(t * 0.3 + i) * 0.1
+    const tc = t % CYCLE
+    const phase = tc / CYCLE
+    
+    // Gold fade first 5s, red fade last 5s (after stable period)
+    const fadeStart = numNodes * APPEAR + STABLE
+    const goldEnd = fadeStart + FADE_GOLD
+    
+    let goldFade = 1
+    let redFade = 1
+    
+    if (tc >= fadeStart && tc < goldEnd) {
+      goldFade = 1 - (tc - fadeStart) / FADE_GOLD
+    } else if (tc >= goldEnd) {
+      goldFade = 0
+      redFade = Math.max(0, 1 - (tc - goldEnd) / FADE_RED)
+    }
+
+    // Nodos
+    for (let i = 0; i < nodePos.length; i++) {
+      const age = tc - i * APPEAR
+      const m = nodeMeshes[i]
+      const mat = m.material as THREE.MeshBasicMaterial
+      const isIdeal = i % 2 === 0
+      
+      if (age < 0) {
+        mat.opacity = 0
+        m.scale.setScalar(0.01)
+      } else if (age < 0.4) {
+        const p = age / 0.4
+        m.scale.setScalar((1 + (1 - p) * 1.5))
+        mat.opacity = p * 0.95
+      } else {
+        const pulse = 1 + Math.sin(t * 0.8 + i * 0.5) * 0.12
+        m.scale.setScalar(pulse)
+        const baseOpacity = isIdeal ? goldFade : redFade
+        mat.opacity = (0.85 + Math.sin(t * 0.6 + i * 0.4) * 0.1) * baseOpacity
+      }
+    }
+
+    // Líneas
+    connData.forEach(({ i, j, cross }, idx) => {
+      const ageI = tc - i * APPEAR
+      const ageJ = tc - j * APPEAR
+      const minAge = Math.min(ageI, ageJ)
+      const mat = lineMeshes[idx].material as THREE.LineBasicMaterial
+      const isIdeal = i % 2 === 0
+
+      if (minAge < 0) {
+        mat.opacity = 0
+        lineProgress[idx] = 0
+      } else {
+        const fadeFactor = isIdeal ? goldFade : redFade
+        const advance = minAge * 0.6
+        lineProgress[idx] = Math.min(advance, lineMaxProgress[idx])
+        
+        if (lineProgress[idx] < 0.05) {
+          mat.opacity = 0
+        } else if (lineProgress[idx] < lineMaxProgress[idx]) {
+          mat.opacity = lineProgress[idx] * 1.2 * fadeFactor
+        } else if (cross) {
+          mat.opacity = 0
+        } else {
+          mat.opacity = 0.7 * fadeFactor
+        }
+      }
     })
+
+    // Partículas fluyendo
+    const arr = flowGeo.attributes.position.array as Float32Array
+    const cols = flowGeo.attributes.color.array as Float32Array
+    let anyActive = false
+    
+    // Calculate fade values before particle loop
+    const psFadeStart = numNodes * APPEAR + STABLE
+    const psGoldEnd = psFadeStart + FADE_GOLD
+    
+    let psGoldFade = 1
+    let psRedFade = 1
+    
+    if (tc >= psFadeStart && tc < psGoldEnd) {
+      psGoldFade = 1 - (tc - psFadeStart) / FADE_GOLD
+    } else if (tc >= psGoldEnd) {
+      psGoldFade = 0
+      psRedFade = Math.max(0, 1 - (tc - psGoldEnd) / FADE_RED)
+    }
+    
+    for (let i = 0; i < totalFlow; i++) {
+      const conn = connData[flowConn[i]]
+      const { i: si, j: sj, cross } = conn
+      const originType = flowOrigin[i]  // 0 = dorado, 1 = rojo
+      
+      const ageI = tc - si * APPEAR
+      const ageJ = tc - sj * APPEAR
+      const minAge = Math.min(ageI, ageJ)
+      
+      // Ocultar partículas según el fade de su nodo origen
+      const originFade = originType === 0 ? psGoldFade : psRedFade
+      if (originFade <= 0) {
+        arr[i*3] = 0
+        arr[i*3+1] = 0
+        arr[i*3+2] = 0
+        continue
+      }
+      
+      // Skip if connection is broken (cross connection that already failed)
+      if (cross && flowBroken[i] === 1) {
+        arr[i*3] = 0
+        arr[i*3+1] = 0
+        arr[i*3+2] = 0
+        continue
+      }
+      
+      // Mostrar partículas tan pronto como exista al menos un nodo
+      if (minAge > 0) {
+        anyActive = true
+        
+        flowProg[i] += flowSpeed[i]
+        
+        // Si cruza tipo opuesto y llega a 50%, marcar como roto
+        if (cross && flowProg[i] > 0.5) {
+          flowBroken[i] = 1
+          flowProg[i] = 0
+        }
+        if (flowProg[i] > 1) flowProg[i] = 0
+        
+        const [ax, ay, az] = nodePos[si]
+        const [bx, by, bz] = nodePos[sj]
+        const p = flowProg[i]
+        
+        arr[i*3] = ax + (bx - ax) * p
+        arr[i*3+1] = ay + (by - ay) * p
+        arr[i*3+2] = az + (bz - az) * p
+      } else {
+        // Ocultar partículas si los nodos no existen aún
+        arr[i*3] = 0
+        arr[i*3+1] = 0
+        arr[i*3+2] = 0
+      }
+    }
+    flowGeo.attributes.position.needsUpdate = true
+    flowGeo.attributes.color.needsUpdate = true
+    const particleOpacity = (psGoldFade + psRedFade) / 2
+    ;(flowPts.material as THREE.PointsMaterial).opacity = anyActive ? particleOpacity * 0.95 : 0
+
     renderer.render(scene, camera)
   }
   animate()

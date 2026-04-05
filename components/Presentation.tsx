@@ -11,14 +11,31 @@ const TOTAL = slides.length
 const TRANSITION_MS = 700
 
 export default function Presentation() {
-  const [current, setCurrent] = useState(0) // 0-indexed
+  const [current, setCurrent] = useState(0)
   const [transitioning, setTransitioning] = useState(false)
   const [textVisible, setTextVisible] = useState(true)
+  const [showMenu, setShowMenu] = useState(false)
   const overlayRef = useRef<HTMLDivElement>(null)
   const cursorRef = useRef<HTMLDivElement>(null)
   const lockedRef = useRef(false)
 
   const slide = slides[current]
+
+  // Load from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('currentSlide')
+    if (saved) {
+      const idx = parseInt(saved, 10)
+      if (!isNaN(idx) && idx >= 0 && idx < TOTAL) {
+        setCurrent(idx)
+      }
+    }
+  }, [])
+
+  // Save to localStorage when slide changes
+  useEffect(() => {
+    localStorage.setItem('currentSlide', current.toString())
+  }, [current])
 
   // ── Navigation ──────────────────────────────────────────────────────────────
   const goTo = useCallback((idx: number) => {
@@ -27,6 +44,7 @@ export default function Presentation() {
     lockedRef.current = true
     setTransitioning(true)
     setTextVisible(false)
+    setShowMenu(false)
 
     setTimeout(() => {
       setCurrent(idx)
@@ -56,6 +74,63 @@ export default function Presentation() {
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [next, prev])
+
+  // ── Trackpad wheel gestures ────────────────────────────────────────────────
+  useEffect(() => {
+    let accumX = 0
+    let lastEventTime = 0
+    let inCooldown = false
+    let cooldownTimer: NodeJS.Timeout | null = null
+    
+    const handleWheel = (e: WheelEvent) => {
+      const now = Date.now()
+      
+      if (inCooldown) {
+        return
+      }
+      
+      // Reset if pause between gestures (800ms)
+      if (now - lastEventTime > 800) {
+        accumX = 0
+      }
+      lastEventTime = now
+      
+      accumX += e.deltaX
+      
+      if (Math.abs(accumX) > 200) {
+        inCooldown = true
+        
+        if (accumX > 0) {
+          next()
+        } else {
+          prev()
+        }
+        
+        if (cooldownTimer) clearTimeout(cooldownTimer)
+        
+        // After triggering, ignore ALL wheel events for 2 seconds
+        cooldownTimer = setTimeout(() => {
+          inCooldown = false
+          accumX = 0
+        }, 2000)
+      }
+    }
+    
+    document.addEventListener('wheel', handleWheel, { passive: true })
+    return () => {
+      document.removeEventListener('wheel', handleWheel)
+      if (cooldownTimer) clearTimeout(cooldownTimer)
+    }
+  }, [next, prev])
+
+  // Prevent browser swipe navigation
+  useEffect(() => {
+    const handleBeforeunload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+    }
+    window.addEventListener('beforeunload', handleBeforeunload)
+    return () => window.removeEventListener('beforeunload', handleBeforeunload)
+  }, [])
 
   // ── Click to advance ─────────────────────────────────────────────────────────
   const handleClick = useCallback((e: React.MouseEvent) => {
@@ -100,7 +175,7 @@ export default function Presentation() {
   }, [])
 
   return (
-    <div style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#000', position: 'relative' }}>
+    <div id="slide-container" style={{ width: '100%', height: '100%', overflow: 'hidden', background: '#000', position: 'relative' }}>
       {/* Custom cursor */}
       <div ref={cursorRef} className="custom-cursor" />
 
@@ -215,7 +290,73 @@ export default function Presentation() {
       )}
 
       {/* HUD */}
-      <HUD current={current + 1} total={TOTAL} title={slide.chapter} />
+      <HUD current={current + 1} total={TOTAL} title={slide.chapter} onCounterClick={() => setShowMenu(!showMenu)} />
+
+      {/* Slide picker menu */}
+      {showMenu && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.85)',
+            zIndex: 200,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+          onClick={() => setShowMenu(false)}
+        >
+          <div
+            style={{
+              background: '#111',
+              padding: '2rem',
+              borderRadius: '8px',
+              maxHeight: '80vh',
+              overflow: 'auto',
+              border: '1px solid #333',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{ color: '#D4AF37', marginBottom: '1rem', fontFamily: 'Georgia, serif' }}>
+              Ir a diapositiva
+            </h2>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.5rem' }}>
+              {slides.map((s, i) => (
+                <button
+                  key={s.id}
+                  onClick={() => goTo(i)}
+                  style={{
+                    padding: '0.5rem',
+                    background: i === current ? '#D4AF37' : '#222',
+                    color: i === current ? '#000' : '#fff',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    fontSize: '0.9rem',
+                  }}
+                >
+                  {i + 1}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setShowMenu(false)}
+              style={{
+                marginTop: '1rem',
+                width: '100%',
+                padding: '0.5rem',
+                background: '#333',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+              }}
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* QR button — only on first slide, desktop only */}
       {current === 0 && <QRButton />}
