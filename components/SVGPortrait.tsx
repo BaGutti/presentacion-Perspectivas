@@ -127,8 +127,10 @@ export default function SVGPortrait({ src, visible, accent = '#D4AF37' }: Props)
 
     const svgEl = container.querySelector('svg')
     if (svgEl) {
-      svgEl.removeAttribute('width')
-      svgEl.removeAttribute('height')
+      const width = svgEl.getAttribute('width')
+      const height = svgEl.getAttribute('height')
+      if (!width) svgEl.setAttribute('width', '100%')
+      if (!height) svgEl.setAttribute('height', '100%')
       svgEl.style.width = '100%'
       svgEl.style.height = '100%'
       svgEl.style.overflow = 'visible'
