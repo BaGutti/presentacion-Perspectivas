@@ -73,6 +73,10 @@ html, body {
   opacity: 0;
 }
 
+.slide-title.text-reduced {
+  font-size: clamp(3.6rem, 7.2vw, 6.75rem);
+}
+
 .slide-subtitle {
   font-size: clamp(1.6rem, 2.8vw, 2.6rem);
   color: rgba(255,255,255,0.82);
@@ -80,6 +84,10 @@ html, body {
   line-height: 1.55;
   max-width: 52ch;
   opacity: 0;
+}
+
+.slide-subtitle.text-reduced {
+  font-size: clamp(1.45rem, 2.5vw, 2.35rem);
 }
 
 .slide-keywords {

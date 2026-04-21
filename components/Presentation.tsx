@@ -234,7 +234,7 @@ export default function Presentation() {
         </div>
 
         <h1
-          className="slide-title"
+          className={`slide-title${[10, 15, 17].includes(slide.id) ? ' text-reduced' : ''}`}
           style={{
             opacity: textVisible ? 1 : 0,
             transition: `opacity ${TRANSITION_MS}ms ease ${TRANSITION_MS * 0.2}ms, transform ${TRANSITION_MS}ms ease ${TRANSITION_MS * 0.2}ms`,
@@ -245,7 +245,7 @@ export default function Presentation() {
         </h1>
 
         <p
-          className="slide-subtitle"
+          className={`slide-subtitle${[10, 15, 17].includes(slide.id) ? ' text-reduced' : ''}`}
           style={{
             opacity: textVisible ? 1 : 0,
             transition: `opacity ${TRANSITION_MS}ms ease ${TRANSITION_MS * 0.3}ms`,
