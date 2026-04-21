@@ -1933,5 +1933,5 @@ export const sceneRegistry: Record<number, (canvas: HTMLCanvasElement) => SceneC
   1: scene01, 2: scene02, 3: scene03, 4: scene04, 5: scene05,
   6: scene06, 7: scene07, 8: scene08, 9: scene09, 10: scene10,
   11: scene11, 12: scene12, 13: scene13, 14: scene14, 15: scene15,
-  16: scene16, 17: scene17, 18: scene18, 19: scene19, 20: scene20,
+  16: scene17, 17: scene16, 18: scene18, 19: scene19, 20: scene20,
 }
